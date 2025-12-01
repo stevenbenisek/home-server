@@ -1,0 +1,24 @@
+services:
+  jellyfin:
+    container_name: jellyfin
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: ghcr.io/jellyfin/jellyfin:${JELLYFIN_TAG:-latest}
+    networks:
+      - media-playback
+    profiles:
+      - gpu-passthrough
+    restart: unless-stopped
+    volumes:
+      - ${JELLYFIN_CONFIG_DIR}:/config
+      - ${MEDIA_DIR}:/media
+      - jellyfin-cache:/cache
+
+networks:
+  media-playback:
+    external: true
+
+volumes:
+  jellyfin-cache:

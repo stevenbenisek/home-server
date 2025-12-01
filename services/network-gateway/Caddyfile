@@ -1,0 +1,63 @@
+{
+    admin off
+}
+
+(proxy_if_healthy) {
+    reverse_proxy {args.0} {
+        header_up X-Forwarded-Proto {scheme}
+        header_up X-Forwarded-Host {host}
+        health_uri {args.1}
+        health_interval 10s
+        health_timeout 10s
+        health_status 200
+        fail_duration 30s
+    }
+}
+
+bazarr.home.arpa {
+    import proxy_if_healthy {$BAZARR_IP}:6767 /health
+}
+
+esphome.home.arpa {
+    import proxy_if_healthy {$ESPHOME_IP}:6052 /
+}
+
+homeassistant.home.arpa {
+    import proxy_if_healthy {$HOMEASSISTANT_IP}:8123 /manifest.json
+}
+
+jellyfin.home.arpa {
+    import proxy_if_healthy {$JELLYFIN_IP}:8096 /health
+}
+
+jellyseerr.home.arpa {
+    import proxy_if_healthy {$JELLYSEERR_IP}:5055 /api/v1/status
+}
+
+lidarr.home.arpa {
+    import proxy_if_healthy {$LIDARR_IP}:8686 /ping
+}
+
+pihole.home.arpa {
+    import proxy_if_healthy {$PIHOLE_IP}:80 /admin/login
+}
+
+portainer.home.arpa {
+    import proxy_if_healthy {$PORTAINER_IP}:9000 /api/status
+}
+
+prowlarr.home.arpa {
+    import proxy_if_healthy {$PROWLARR_IP}:9696 /ping
+}
+
+qbittorrent.home.arpa {
+    import proxy_if_healthy {$QBITTORRENT_IP}:8080 /
+}
+
+radarr.home.arpa {
+    import proxy_if_healthy {$RADARR_IP}:7878 /ping
+}
+
+sonarr.home.arpa {
+    import proxy_if_healthy {$SONARR_IP}:8989 /ping
+}

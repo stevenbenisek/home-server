@@ -1,0 +1,72 @@
+services:
+  caddy:
+    image: caddy:${CADDY_TAG:-latest}
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      BAZARR_IP: ${BAZARR_IP:-gluetun}
+      ESPHOME_IP: ${ESPHOME_IP:-host.docker.internal}
+      HOMEASSISTANT_IP: ${HOMEASSISTANT_IP:-host.docker.internal}
+      JELLYFIN_IP: ${JELLYFIN_IP:-jellyfin}
+      JELLYSEERR_IP: ${JELLYSEERR_IP:-jellyseerr}
+      LIDARR_IP: ${LIDARR_IP:-gluetun}
+      PIHOLE_IP: ${PIHOLE_IP:-pihole}
+      PORTAINER_IP: ${PORTAINER_IP:-portainer}
+      PROWLARR_IP: ${PROWLARR_IP:-gluetun}
+      QBITTORRENT_IP: ${QBITTORRENT_IP:-gluetun}
+      RADARR_IP: ${RADARR_IP:-gluetun}
+      SONARR_IP: ${SONARR_IP:-gluetun}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-config:/config
+      - caddy-data:/data
+    networks:
+      - media-automation
+      - media-playback
+      - network-gateway
+      - system-monitoring
+
+  pihole:
+    image: ghcr.io/pi-hole/pihole:${PIHOLE_TAG:-latest}
+    container_name: pihole
+    depends_on:
+      - caddy
+    restart: unless-stopped
+    ports:
+      - '53:53/tcp'
+      - '53:53/udp'
+    environment:
+      FTLCONF_dns_listeningMode: 'ALL'
+      FTLCONF_misc_dnsmasq_lines: |-
+        address=/.home.arpa/${HOST_IP}
+      FTLCONF_webserver_api_password: ${WEBSERVER_API_PASSWORD}
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    volumes:
+      - pihole-config:/etc/pihole
+      - pihole-dnsmasq:/etc/dnsmasq.d
+    networks:
+      - network-gateway
+    cap_add:
+      - NET_ADMIN
+
+networks:
+  media-automation:
+    external: true
+  media-playback:
+    external: true
+  network-gateway:
+    external: true
+  system-monitoring:
+    external: true
+
+volumes:
+  caddy-config:
+  caddy-data:
+  pihole-config:
+  pihole-dnsmasq:

@@ -1,0 +1,21 @@
+services:
+  portainer:
+    container_name: portainer
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: portainer/portainer-ce:${PORTAINER_TAG:-latest}
+    networks:
+      - system-monitoring
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-config:/data
+
+networks:
+  system-monitoring:
+    external: true
+
+volumes:
+  portainer-config:

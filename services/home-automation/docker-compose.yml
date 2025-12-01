@@ -1,0 +1,13 @@
+services:
+  homeassistant:
+    container_name: homeassistant
+    environment:
+      - PGID=${PGID}
+      - PUID=${PUID}
+      - TZ=${TZ}
+    image: ghcr.io/home-assistant/home-assistant:${HOMEASSISTANT_TAG:-latest}
+    network_mode: host
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - ${HOMEASSISTANT_CONFIG_DIR}:/config

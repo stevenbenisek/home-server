@@ -1,0 +1,145 @@
+services:
+  bazarr:
+    container_name: bazarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: ghcr.io/linuxserver/bazarr:${BAZARR_TAG:-latest}
+    network_mode: "service:gluetun"
+    restart: unless-stopped
+    volumes:
+      - ${BAZARR_CONFIG_DIR}:/config
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${MEDIA_DIR}:/media
+
+  gluetun:
+    cap_add:
+      - NET_ADMIN
+    container_name: gluetun
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      SERVER_COUNTRIES: ${SERVER_COUNTRIES}
+      TZ: ${TZ}
+      VPN_SERVICE_PROVIDER: nordvpn
+      VPN_TYPE: wireguard
+      WIREGUARD_PRIVATE_KEY: ${WIREGUARD_PRIVATE_KEY}
+      HEALTH_CHECK_PING: false
+    image: ghcr.io/qdm12/gluetun:${GLUETUN_TAG:-latest}
+    networks:
+      - media-automation
+      - media-automation-vpn
+    ports:
+      - "6881:6881" # qBittorrent
+      - "6881:6881/udp" # qBittorrent
+    restart: unless-stopped
+    volumes:
+      - gluetun-config:/gluetun
+
+  jellyseerr:
+    container_name: jellyseerr
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: ghcr.io/fallenbagel/jellyseerr:${JELLYSEERR_TAG:-latest}
+    networks:
+      - media-automation
+      - media-playback
+    restart: unless-stopped
+    volumes:
+      - ${JELLYSEERR_CONFIG_DIR}:/app/config
+
+  lidarr:
+    container_name: lidarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: ghcr.io/linuxserver/lidarr:${LIDARR_TAG:-latest}
+    network_mode: "service:gluetun"
+    restart: unless-stopped
+    volumes:
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${MEDIA_DIR}/music:/media
+      - ${LIDARR_CONFIG_DIR}:/config
+
+  prowlarr:
+    container_name: prowlarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: ghcr.io/linuxserver/prowlarr:${PROWLARR_TAG:-latest}
+    network_mode: "service:gluetun"
+    restart: unless-stopped
+    volumes:
+      - ${PROWLARR_CONFIG_DIR}:/config
+
+  qbittorrent:
+    container_name: qbittorrent
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+      WEBUI_PORT: 8080
+    image: ghcr.io/linuxserver/qbittorrent:${QBITTORRENT_TAG:-latest}
+    network_mode: "service:gluetun"
+    restart: unless-stopped
+    volumes:
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${QBITTORRENT_CONFIG_DIR}:/config
+
+  radarr:
+    container_name: radarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: ghcr.io/linuxserver/radarr:${RADARR_TAG:-latest}
+    network_mode: "service:gluetun"
+    restart: unless-stopped
+    volumes:
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${MEDIA_DIR}/movies:/media
+      - ${RADARR_CONFIG_DIR}:/config
+
+  sonarr:
+    container_name: sonarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: ghcr.io/linuxserver/sonarr:${SONARR_TAG:-latest}
+    network_mode: "service:gluetun"
+    restart: unless-stopped
+    volumes:
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${MEDIA_DIR}/shows:/media
+      - ${SONARR_CONFIG_DIR}:/config
+
+networks:
+  media-automation:
+    external: true
+  media-automation-vpn:
+    external: true
+  media-playback:
+    external: true
+
+volumes:
+  gluetun-config:
