@@ -1,0 +1,51 @@
+{
+    admin off
+}
+
+bazarr.{$DOMAIN_TLD} {
+    reverse_proxy gluetun:6767
+}
+
+homarr.{$DOMAIN_TLD} {
+    reverse_proxy homarr:7575
+}
+
+homeassistant.{$DOMAIN_TLD} {
+    reverse_proxy homeassistant:8123
+}
+
+jellyfin.{$DOMAIN_TLD} {
+    reverse_proxy jellyfin:8096
+}
+
+jellyseerr.{$DOMAIN_TLD} {
+    reverse_proxy jellyseerr:5055
+}
+
+lidarr.{$DOMAIN_TLD} {
+    reverse_proxy gluetun:8686
+}
+
+pihole.{$DOMAIN_TLD} {
+    reverse_proxy pihole:80
+}
+
+portainer.{$DOMAIN_TLD} {
+    reverse_proxy portainer:9000
+}
+
+prowlarr.{$DOMAIN_TLD} {
+    reverse_proxy gluetun:9696
+}
+
+qbittorrent.{$DOMAIN_TLD} {
+    reverse_proxy gluetun:8080
+}
+
+radarr.{$DOMAIN_TLD} {
+    reverse_proxy gluetun:7878
+}
+
+sonarr.{$DOMAIN_TLD} {
+    reverse_proxy gluetun:8989
+}
