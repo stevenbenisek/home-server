@@ -1,0 +1,289 @@
+services:
+  bazarr:
+    container_name: bazarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: lscr.io/linuxserver/bazarr:${BAZARR_VERSION:-latest}
+    network_mode: "service:gluetun"
+    profiles:
+      - downloads
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_DIR}/bazarr:/config
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${MEDIA_DIR}:/media
+
+  buildarr:
+    container_name: buildarr
+    depends_on:
+      - sonarr
+      - radarr
+      - prowlarr
+      - lidarr
+      - bazarr
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: callum027/buildarr:${BUILDARR_VERSION:-latest}
+    profiles:
+      - downloads
+    restart: unless-stopped
+    volumes:
+      - ./buildarr.yml:/config/buildarr.yml:ro
+      - ./buildarr-secrets.yml:/config/buildarr-secrets.yml:ro
+
+  caddy:
+    container_name: caddy
+    image: caddy:${CADDY_VERSION:-latest}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3 support
+    restart: unless-stopped
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ${CONFIG_DIR}/caddy:/config
+      - ${DATA_DIR}/caddy:/data
+
+  cloudflared:
+    command: tunnel run
+    container_name: cloudflared
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    image: cloudflare/cloudflared:${CLOUDFLARED_VERSION:-latest}
+    profiles:
+      - proxy
+    restart: unless-stopped
+
+  gluetun:
+    cap_add:
+      - NET_ADMIN
+    container_name: gluetun
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      SERVER_COUNTRIES: ${SERVER_COUNTRIES}
+      TZ: ${TZ}
+      VPN_SERVICE_PROVIDER: nordvpn
+      VPN_TYPE: wireguard
+      WIREGUARD_PRIVATE_KEY: ${WIREGUARD_PRIVATE_KEY}
+    image: qmcgaw/gluetun:${GLUETUN_VERSION:-latest}
+    ports:
+      - "6767:6767" # Bazarr
+      - "6881:6881" # qBittorrent
+      - "6881:6881/udp" # qBittorrent
+      - "7878:7878" # Radarr
+      - "8080:8080" # qBittorrent WebUI
+      - "8686:8686" # Lidarr
+      - "8989:8989" # Sonarr
+      - "9696:9696" # Prowlarr
+    profiles:
+      - downloads
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_DIR}/gluetun:/gluetun
+
+  homarr:
+    container_name: homarr
+    image: ghcr.io/ajnart/homarr:${HOMARR_VERSION:-latest}
+    ports:
+      - "7575:7575"
+    profiles:
+      - admin
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_DIR}/homarr:/app/data/configs
+      - ${CONFIG_DIR}/homarr/icons:/app/public/icons
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  homeassistant:
+    container_name: homeassistant
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: ghcr.io/home-assistant/home-assistant:${HOMEASSISTANT_VERSION:-latest}
+    network_mode: host
+    profiles:
+      - iot
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_DIR}/homeassistant:/config
+
+  jellyfin:
+    container_name: jellyfin
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: jellyfin/jellyfin:${JELLYFIN_VERSION:-latest}
+    ports:
+      - "8096:8096"
+    profiles:
+      # Uses 'media-hwa' instead of 'media' to exclude from macOS Docker (no GPU passthrough)
+      # Run Jellyfin natively on macOS for hardware transcoding support
+      # - media
+      - media-hwa
+    restart: unless-stopped
+    volumes:
+      - ${CACHE_DIR}/jellyfin:/cache
+      - ${CONFIG_DIR}/jellyfin:/config
+      - ${MEDIA_DIR}:/media
+
+  jellyseerr:
+    container_name: jellyseerr
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: fallenbagel/jellyseerr:${JELLYSEERR_VERSION:-latest}
+    ports:
+      - "5055:5055"
+    profiles:
+      - media
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_DIR}/jellyseerr:/app/config
+
+  lidarr:
+    container_name: lidarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: lscr.io/linuxserver/lidarr:${LIDARR_VERSION:-latest}
+    network_mode: "service:gluetun"
+    profiles:
+      - downloads
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_DIR}/lidarr:/config
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${MEDIA_DIR}/music:/media
+
+  pihole:
+    cap_add:
+      - NET_ADMIN
+    container_name: pihole
+    environment:
+      FTLCONF_dns_hosts: |
+        host.docker.internal pihole.localhost
+        host.docker.internal homarr.localhost
+        host.docker.internal homeassistant.localhost
+        host.docker.internal jellyfin.localhost
+        host.docker.internal jellyseerr.localhost
+        host.docker.internal portainer.localhost
+        host.docker.internal bazarr.localhost
+        host.docker.internal lidarr.localhost
+        host.docker.internal prowlarr.localhost
+        host.docker.internal qbittorrent.localhost
+        host.docker.internal radarr.localhost
+        host.docker.internal sonarr.localhost
+      FTLCONF_webserver_api_password: ${PIHOLE_WEBSERVER_API_PASSWORD}
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: pihole/pihole:${PIHOLE_VERSION:-latest}
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "8081:80/tcp"
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_DIR}/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+      - ${CONFIG_DIR}/pihole/etc-pihole:/etc/pihole
+
+  portainer:
+    container_name: portainer
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: portainer/portainer-ce:${PORTAINER_VERSION:-latest}
+    ports:
+      - "9000:9000"
+    profiles:
+      - admin
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_DIR}/portainer:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  prowlarr:
+    container_name: prowlarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: lscr.io/linuxserver/prowlarr:${PROWLARR_VERSION:-latest}
+    network_mode: "service:gluetun"
+    profiles:
+      - downloads
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_DIR}/prowlarr:/config
+
+  qbittorrent:
+    container_name: qbittorrent
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+      WEBUI_PORT: 8080
+    image: lscr.io/linuxserver/qbittorrent:${QBITTORRENT_VERSION:-latest}
+    network_mode: "service:gluetun"
+    profiles:
+      - downloads
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_DIR}/qbittorrent:/config
+      - ${DOWNLOADS_DIR}:/downloads
+
+  radarr:
+    container_name: radarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: lscr.io/linuxserver/radarr:${RADARR_VERSION:-latest}
+    network_mode: "service:gluetun"
+    profiles:
+      - downloads
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_DIR}/radarr:/config
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${MEDIA_DIR}/movies:/media
+
+  sonarr:
+    container_name: sonarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: lscr.io/linuxserver/sonarr:${SONARR_VERSION:-latest}
+    network_mode: "service:gluetun"
+    profiles:
+      - downloads
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_DIR}/sonarr:/config
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${MEDIA_DIR}/shows:/media

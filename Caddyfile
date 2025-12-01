@@ -1,0 +1,51 @@
+{
+    admin off
+}
+
+bazarr.localhost {
+    reverse_proxy gluetun:6767
+}
+
+homarr.localhost {
+    reverse_proxy homarr:7575
+}
+
+homeassistant.localhost {
+    reverse_proxy homeassistant:8123
+}
+
+jellyfin.localhost {
+    reverse_proxy jellyfin:8096
+}
+
+jellyseerr.localhost {
+    reverse_proxy jellyseerr:5055
+}
+
+lidarr.localhost {
+    reverse_proxy gluetun:8686
+}
+
+pihole.localhost {
+    reverse_proxy pihole:80
+}
+
+portainer.localhost {
+    reverse_proxy portainer:9000
+}
+
+prowlarr.localhost {
+    reverse_proxy gluetun:9696
+}
+
+qbittorrent.localhost {
+    reverse_proxy gluetun:8080
+}
+
+radarr.localhost {
+    reverse_proxy gluetun:7878
+}
+
+sonarr.localhost {
+    reverse_proxy gluetun:8989
+}
