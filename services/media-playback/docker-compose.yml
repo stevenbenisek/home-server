@@ -1,0 +1,43 @@
+services:
+  jellyfin:
+    container_name: jellyfin
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: jellyfin/jellyfin:${JELLYFIN_TAG:-latest}
+    networks:
+      - media-playback
+    ports:
+      - '8096:8096'
+    profiles:
+      - gpu-passthrough
+    restart: unless-stopped
+    volumes:
+      - ${MEDIA_DIR}:/media
+      - jellyfin-cache:/cache
+      - jellyfin-config:/config
+
+  jellyseerr:
+    container_name: jellyseerr
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: fallenbagel/jellyseerr:${JELLYSEERR_TAG:-latest}
+    networks:
+      - media-playback
+    ports:
+      - '5055:5055'
+    restart: unless-stopped
+    volumes:
+      - jellyseerr-config:/app/config
+
+networks:
+  media-playback:
+    external: true
+
+volumes:
+  jellyfin-cache:
+  jellyfin-config:
+  jellyseerr-config:

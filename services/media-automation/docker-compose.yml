@@ -1,0 +1,137 @@
+services:
+  bazarr:
+    container_name: bazarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: lscr.io/linuxserver/bazarr:${BAZARR_TAG:-latest}
+    network_mode: "service:gluetun"
+    restart: unless-stopped
+    volumes:
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${MEDIA_DIR}:/media
+      - bazarr-config:/config
+
+  gluetun:
+    cap_add:
+      - NET_ADMIN
+    container_name: gluetun
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      SERVER_COUNTRIES: ${SERVER_COUNTRIES}
+      TZ: ${TZ}
+      VPN_SERVICE_PROVIDER: nordvpn
+      VPN_TYPE: wireguard
+      WIREGUARD_PRIVATE_KEY: ${WIREGUARD_PRIVATE_KEY}
+    image: qmcgaw/gluetun:${GLUETUN_TAG:-latest}
+    networks:
+      - media-automation
+    ports:
+      - "6767:6767" # Bazarr
+      - "6881:6881" # qBittorrent
+      - "6881:6881/udp" # qBittorrent
+      - "7878:7878" # Radarr
+      - "8080:8080" # qBittorrent WebUI
+      - "8686:8686" # Lidarr
+      - "8989:8989" # Sonarr
+      - "9696:9696" # Prowlarr
+    restart: unless-stopped
+    volumes:
+      - gluetun-config:/gluetun
+
+  lidarr:
+    container_name: lidarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: lscr.io/linuxserver/lidarr:${LIDARR_TAG:-latest}
+    network_mode: "service:gluetun"
+    restart: unless-stopped
+    volumes:
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${MEDIA_DIR}/music:/media
+      - lidarr-config:/config
+
+  prowlarr:
+    container_name: prowlarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: lscr.io/linuxserver/prowlarr:${PROWLARR_TAG:-latest}
+    network_mode: "service:gluetun"
+    restart: unless-stopped
+    volumes:
+      - prowlarr-config:/config
+
+  qbittorrent:
+    container_name: qbittorrent
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+      WEBUI_PORT: 8080
+    image: lscr.io/linuxserver/qbittorrent:${QBITTORRENT_TAG:-latest}
+    network_mode: "service:gluetun"
+    restart: unless-stopped
+    volumes:
+      - ${DOWNLOADS_DIR}:/downloads
+      - qbittorrent-config:/config
+
+  radarr:
+    container_name: radarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: lscr.io/linuxserver/radarr:${RADARR_TAG:-latest}
+    network_mode: "service:gluetun"
+    restart: unless-stopped
+    volumes:
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${MEDIA_DIR}/movies:/media
+      - radarr-config:/config
+
+  sonarr:
+    container_name: sonarr
+    depends_on:
+      - gluetun
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: lscr.io/linuxserver/sonarr:${SONARR_TAG:-latest}
+    network_mode: "service:gluetun"
+    restart: unless-stopped
+    volumes:
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${MEDIA_DIR}/shows:/media
+      - sonarr-config:/config
+
+networks:
+  media-automation:
+    external: true
+
+volumes:
+  bazarr-config:
+  gluetun-config:
+  lidarr-config:
+  prowlarr-config:
+  qbittorrent-config:
+  radarr-config:
+  sonarr-config:

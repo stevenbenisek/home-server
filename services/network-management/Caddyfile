@@ -1,0 +1,55 @@
+{
+    admin off
+}
+
+bazarr.home.arpa {
+    reverse_proxy gluetun:6767
+}
+
+esphome.home.arpa {
+    reverse_proxy esphome:6052
+}
+
+homarr.home.arpa {
+    reverse_proxy homarr:7575
+}
+
+homeassistant.home.arpa {
+    reverse_proxy homeassistant:8123
+}
+
+jellyfin.home.arpa {
+    reverse_proxy jellyfin:8096
+}
+
+jellyseerr.home.arpa {
+    reverse_proxy jellyseerr:5055
+}
+
+lidarr.home.arpa {
+    reverse_proxy gluetun:8686
+}
+
+pihole.home.arpa {
+    reverse_proxy pihole:80
+}
+
+portainer.home.arpa {
+    reverse_proxy portainer:9000
+}
+
+prowlarr.home.arpa {
+    reverse_proxy gluetun:9696
+}
+
+qbittorrent.home.arpa {
+    reverse_proxy gluetun:8080
+}
+
+radarr.home.arpa {
+    reverse_proxy gluetun:7878
+}
+
+sonarr.home.arpa {
+    reverse_proxy gluetun:8989
+}

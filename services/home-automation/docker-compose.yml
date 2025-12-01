@@ -1,0 +1,38 @@
+services:
+  esphome:
+    container_name: esphome
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+      PASSWORD: ${ESPHOME_PASSWORD}
+      USERNAME: ${ESPHOME_USERNAME}
+    image: ghcr.io/esphome/esphome:${ESPHOME_TAG:-latest}
+    network_mode: host
+    privileged: true
+    profiles:
+      - usb-passthrough
+    restart: unless-stopped
+    volumes:
+      - esphome-config:/config
+
+  homeassistant:
+    container_name: homeassistant
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: ghcr.io/home-assistant/home-assistant:${HOMEASSISTANT_TAG:-latest}
+    network_mode: host
+    privileged: true
+    restart: unless-stopped
+    volumes:
+      - homeassistant-config:/config
+
+networks:
+  home-automation:
+    external: true
+
+volumes:
+  esphome-config:
+  homeassistant-config:

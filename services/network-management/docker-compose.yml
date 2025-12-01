@@ -1,0 +1,48 @@
+services:
+  caddy:
+    image: caddy:${CADDY_TAG:-latest}
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-config:/config
+      - caddy-data:/data
+    networks:
+      - network-management
+
+  pihole:
+    image: pihole/pihole:${PIHOLE_TAG:-latest}
+    container_name: pihole
+    restart: unless-stopped
+    ports:
+      - '53:53/tcp'
+      - '53:53/udp'
+      - "80:80/tcp"
+      - "443:443/tcp"
+    environment:
+      FTLCONF_dns_listeningMode: 'ALL'
+      FTLCONF_misc_dnsmasq_lines: |-
+        address=*.home.arpa/host.docker.internal
+      FTLCONF_webserver_api_password: ${WEBSERVER_API_PASSWORD}
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    volumes:
+      - pihole-config:/etc/pihole
+    networks:
+      - network-management
+    cap_add:
+      - NET_ADMIN
+
+networks:
+  network-management:
+    external: true
+
+volumes:
+  caddy-config:
+  caddy-data:
+  pihole-config:

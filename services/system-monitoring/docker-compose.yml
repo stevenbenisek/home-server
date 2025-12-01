@@ -1,0 +1,38 @@
+services:
+  homarr:
+    container_name: homarr
+    image: ghcr.io/ajnart/homarr:${HOMARR_TAG:-latest}
+    networks:
+      - system-monitoring
+    ports:
+      - "7575:7575"
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - homarr-config:/app/data/configs
+      - homarr-icons:/app/public/icons
+
+  portainer:
+    container_name: portainer
+    environment:
+      PGID: ${PGID}
+      PUID: ${PUID}
+      TZ: ${TZ}
+    image: portainer/portainer-ce:${PORTAINER_TAG:-latest}
+    networks:
+      - system-monitoring
+    ports:
+      - "9000:9000"
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-config:/data
+
+networks:
+  system-monitoring:
+    external: true
+
+volumes:
+  homarr-config:
+  homarr-icons:
+  portainer-config:
